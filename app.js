@@ -1,3 +1,9 @@
+// Supabase 配置
+const SUPABASE_URL = 'https://strkcdsgvhryfcpqkgsp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_0N87xvXEF2xsmLX47Xl8EA_mcoQUiFH';
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // 数据结构
 let todos = [];
 let notes = [];
@@ -7,6 +13,7 @@ let selectedHour = null;
 let selectedSide = null;
 let selectedTodoId = null;
 let recognition = null;
+let isLoading = false;
 
 // 获取天气图标
 function getWeatherIcon(condition) {
@@ -63,8 +70,8 @@ const weekdayLabels = ['周日', '周一', '周二', '周三', '周四', '周五
 const weekdayClasses = ['day-sunday', 'day-monday', 'day-tuesday', 'day-wednesday', 'day-thursday', 'day-friday', 'day-saturday'];
 
 // 初始化
-function init() {
-  loadData();
+async function init() {
+  await loadData();
   createStars();
   createMeteors();
   updateDateDisplay();
@@ -75,6 +82,14 @@ function init() {
   renderTimeline();
   
   setInterval(updateTime, 1000);
+  
+  // 设置定期同步（每30秒自动同步一次）
+  setInterval(async () => {
+    await loadData();
+    renderTodos();
+    renderNotes();
+    renderTimeline();
+  }, 30000);
 }
 
 // 创建星星
@@ -148,26 +163,26 @@ function updateDateDisplay() {
 }
 
 // 日期变更
-function changeDate(days) {
+async function changeDate(days) {
   selectedDate.setDate(selectedDate.getDate() + days);
   updateDateDisplay();
   updateTheme();
-  loadDayData();
+  await loadDayData();
 }
 
 // 日期选择器变更
-function onDateChange() {
+async function onDateChange() {
   const dateStr = document.getElementById('datePicker').value;
   if (dateStr) {
     selectedDate = new Date(dateStr);
     updateDateDisplay();
     updateTheme();
-    loadDayData();
+    await loadDayData();
   }
 }
 
 // 添加待办
-function addTodo(event) {
+async function addTodo(event) {
   if (event && event.key !== 'Enter') return;
   
   const input = document.getElementById('todoInput');
@@ -175,7 +190,7 @@ function addTodo(event) {
   if (!text) return;
   
   const todo = {
-    id: Date.now(),
+    id: Date.now().toString(),
     text,
     completed: false,
     date: selectedDate.toISOString().split('T')[0]
@@ -184,7 +199,7 @@ function addTodo(event) {
   todos.push(todo);
   input.value = '';
   renderTodos();
-  saveData();
+  await saveData();
 }
 
 // 渲染待办列表
@@ -209,20 +224,20 @@ function renderTodos() {
 }
 
 // 切换待办状态
-function toggleTodo(id) {
+async function toggleTodo(id) {
   const todo = todos.find(t => t.id === id);
   if (todo) {
     todo.completed = !todo.completed;
     renderTodos();
-    saveData();
+    await saveData();
   }
 }
 
 // 删除待办
-function deleteTodo(id) {
+async function deleteTodo(id) {
   todos = todos.filter(t => t.id !== id);
   renderTodos();
-  saveData();
+  await saveData();
 }
 
 // 打开添加事件弹窗
@@ -277,32 +292,33 @@ function closeEventModal() {
 }
 
 // 删除选中的待办事项
-function deleteSelectedTodo() {
+async function deleteSelectedTodo() {
   if (!selectedTodoId) {
     alert('请先选择一个待办事项');
     return;
   }
   
   if (confirm('确定要删除这个待办事项吗？')) {
+    const todoToDelete = todos.find(t => t.id === selectedTodoId);
+    
     // 从待办列表中删除
     todos = todos.filter(t => t.id !== selectedTodoId);
     
     // 同时删除时间轴中相关的计划和执行事件
-    const todo = todos.find(t => t.id === selectedTodoId);
-    if (todo) {
-      timelineEvents.plan = timelineEvents.plan.filter(e => e.text !== todo.text);
-      timelineEvents.execution = timelineEvents.execution.filter(e => e.text !== todo.text);
+    if (todoToDelete) {
+      timelineEvents.plan = timelineEvents.plan.filter(e => e.text !== todoToDelete.text);
+      timelineEvents.execution = timelineEvents.execution.filter(e => e.text !== todoToDelete.text);
     }
     
     closeEventModal();
     renderTodos();
     renderTimeline();
-    saveData();
+    await saveData();
   }
 }
 
 // 保存事件
-function saveEvent() {
+async function saveEvent() {
   let text = '';
   
   // 优先使用选中的待办
@@ -324,19 +340,20 @@ function saveEvent() {
   const end = document.getElementById('eventEnd').value;
   
   const event = {
-    id: Date.now(),
+    id: Date.now().toString(),
     text,
     start,
     end,
     hour: selectedHour,
     date: selectedDate.toISOString().split('T')[0],
+    side: selectedSide,
     status: selectedSide === 'execution' ? 'pending' : null
   };
   
   timelineEvents[selectedSide].push(event);
   closeEventModal();
   renderTimeline();
-  saveData();
+  await saveData();
 }
 
 // 渲染时间轴
@@ -609,7 +626,7 @@ function closePlanDetailModal() {
 }
 
 // 保存计划详情修改
-function savePlanDetail() {
+async function savePlanDetail() {
   const event = timelineEvents.plan.find(e => e.id === currentPlanEventId);
   if (event) {
     const oldText = event.text;
@@ -632,12 +649,12 @@ function savePlanDetail() {
     
     closePlanDetailModal();
     renderTimeline();
-    saveData();
+    await saveData();
   }
 }
 
 // 删除计划事件
-function deletePlanEvent() {
+async function deletePlanEvent() {
   if (confirm('确定要删除这个计划吗？')) {
     // 先找到要删除的事件
     const event = timelineEvents.plan.find(e => e.id === currentPlanEventId);
@@ -654,7 +671,7 @@ function deletePlanEvent() {
     
     closePlanDetailModal();
     renderTimeline();
-    saveData();
+    await saveData();
   }
 }
 
@@ -714,13 +731,13 @@ function updateStatusButtons(status) {
 }
 
 // 更新执行详情状态（在弹窗中）
-function updateExecutionDetailStatus(status) {
+async function updateExecutionDetailStatus(status) {
   const event = timelineEvents.execution.find(e => e.id === currentExecutionEventId);
   if (event) {
     event.status = status;
     updateStatusButtons(status);
     renderTimeline(); // 立即重新渲染时间轴，同步显示状态
-    saveData();
+    await saveData();
   }
 }
 
@@ -731,7 +748,7 @@ function closeExecutionDetailModal() {
 }
 
 // 保存执行详情
-function saveExecutionDetail() {
+async function saveExecutionDetail() {
   const event = timelineEvents.execution.find(e => e.id === currentExecutionEventId);
   if (event) {
     // 保存实际执行时间
@@ -740,13 +757,13 @@ function saveExecutionDetail() {
     // 保存其他状态文本
     event.statusText = document.getElementById('statusOtherInput').value;
     renderTimeline();
-    saveData();
+    await saveData();
   }
   closeExecutionDetailModal();
 }
 
 // 删除执行事件
-function deleteExecutionEvent() {
+async function deleteExecutionEvent() {
   if (confirm('确定要删除这个计划吗？')) {
     // 先找到要删除的事件
     const event = timelineEvents.execution.find(e => e.id === currentExecutionEventId);
@@ -763,7 +780,7 @@ function deleteExecutionEvent() {
     
     closeExecutionDetailModal();
     renderTimeline();
-    saveData();
+    await saveData();
   }
 }
 
@@ -792,7 +809,7 @@ function syncExecutionFromPlan() {
 }
 
 // 添加备注
-function addNote(event) {
+async function addNote(event) {
   if (event && event.key !== 'Enter') return;
   
   const input = document.getElementById('noteInput');
@@ -800,7 +817,7 @@ function addNote(event) {
   if (!text) return;
   
   const note = {
-    id: Date.now(),
+    id: Date.now().toString(),
     type: 'text',
     content: text,
     date: selectedDate.toISOString().split('T')[0],
@@ -810,7 +827,7 @@ function addNote(event) {
   notes.push(note);
   input.value = '';
   renderNotes();
-  saveData();
+  await saveData();
 }
 
 // 添加图片
@@ -821,9 +838,9 @@ function addImage() {
   if (!file) return;
   
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const note = {
-      id: Date.now(),
+      id: Date.now().toString(),
       type: 'image',
       content: e.target.result,
       date: selectedDate.toISOString().split('T')[0],
@@ -832,7 +849,7 @@ function addImage() {
     
     notes.push(note);
     renderNotes();
-    saveData();
+    await saveData();
     input.value = '';
   };
   
@@ -850,11 +867,11 @@ function toggleVoiceInput() {
     recognition.interimResults = false;
     recognition.continuous = false;
     
-    recognition.onresult = function(event) {
+    recognition.onresult = async function(event) {
       const transcript = event.results[0][0].transcript;
       
       const note = {
-        id: Date.now(),
+        id: Date.now().toString(),
         type: 'text',
         content: transcript,
         date: selectedDate.toISOString().split('T')[0],
@@ -863,7 +880,7 @@ function toggleVoiceInput() {
       
       notes.push(note);
       renderNotes();
-      saveData();
+      await saveData();
     };
     
     recognition.onend = function() {
@@ -917,44 +934,135 @@ function renderNotes() {
 }
 
 // 删除备注
-function deleteNote(id) {
+async function deleteNote(id) {
   notes = notes.filter(n => n.id !== id);
   renderNotes();
-  saveData();
+  await saveData();
 }
 
-// 数据持久化
-function saveData() {
-  const data = { todos, notes, timelineEvents };
-  localStorage.setItem('todo-app-data', JSON.stringify(data));
-}
-
-function loadData() {
-  const saved = localStorage.getItem('todo-app-data');
-  if (saved) {
-    try {
-      const data = JSON.parse(saved);
-      todos = data.todos || [];
-      notes = data.notes || [];
-      
-      // 确保 timelineEvents 结构完整
-      if (data.timelineEvents && typeof data.timelineEvents === 'object') {
-        timelineEvents = {
-          plan: data.timelineEvents.plan || [],
-          execution: data.timelineEvents.execution || []
-        };
-      } else {
-        timelineEvents = { plan: [], execution: [] };
+// 数据持久化 - 使用 Supabase
+async function saveData() {
+  if (isLoading) return;
+  
+  const currentDate = selectedDate.toISOString().split('T')[0];
+  
+  try {
+    // 保存待办事项
+    for (const todo of todos) {
+      if (todo.date === currentDate) {
+        await supabaseClient.from('todos').upsert({
+          id: todo.id,
+          text: todo.text,
+          date: todo.date,
+          completed: todo.completed || false
+        });
       }
-    } catch (e) {
-      console.error('Failed to parse saved data:', e);
-      timelineEvents = { plan: [], execution: [] };
     }
+    
+    // 保存时间轴事件
+    const allEvents = [...timelineEvents.plan, ...timelineEvents.execution];
+    for (const event of allEvents) {
+      if (event.date === currentDate) {
+        await supabaseClient.from('timeline_events').upsert({
+          id: event.id,
+          text: event.text,
+          date: event.date,
+          "start": event.start,
+          "end": event.end,
+          side: event.side,
+          status: event.status || 'pending',
+          status_text: event.statusText || null
+        });
+      }
+    }
+    
+    // 保存备注
+    const todayNote = notes.find(n => n.date === currentDate);
+    if (todayNote) {
+      await supabaseClient.from('notes').upsert({
+        id: todayNote.id,
+        content: todayNote.content || '',
+        images: todayNote.images || [],
+        date: todayNote.date
+      });
+    }
+    
+    console.log('Data saved to Supabase');
+  } catch (error) {
+    console.error('Failed to save data:', error);
+  }
+}
+
+async function loadData() {
+  if (isLoading) return;
+  isLoading = true;
+  
+  const currentDate = selectedDate.toISOString().split('T')[0];
+  
+  try {
+    // 加载待办事项
+    const { data: todosData, error: todosError } = await supabaseClient
+      .from('todos')
+      .select('*')
+      .eq('date', currentDate);
+    
+    if (todosError) throw todosError;
+    todos = todosData || [];
+    
+    // 加载时间轴事件
+    const { data: eventsData, error: eventsError } = await supabaseClient
+      .from('timeline_events')
+      .select('*')
+      .eq('date', currentDate);
+    
+    if (eventsError) throw eventsError;
+    
+    timelineEvents = { plan: [], execution: [] };
+    if (eventsData) {
+      eventsData.forEach(event => {
+        const eventObj = {
+          id: event.id,
+          text: event.text,
+          date: event.date,
+          start: event.start,
+          end: event.end,
+          side: event.side,
+          status: event.status,
+          statusText: event.status_text
+        };
+        
+        if (event.side === 'plan') {
+          timelineEvents.plan.push(eventObj);
+        } else {
+          timelineEvents.execution.push(eventObj);
+        }
+      });
+    }
+    
+    // 加载备注
+    const { data: notesData, error: notesError } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('date', currentDate);
+    
+    if (notesError) throw notesError;
+    notes = notesData || [];
+    
+    console.log('Data loaded from Supabase');
+  } catch (error) {
+    console.error('Failed to load data:', error);
+    // 如果 Supabase 加载失败，使用空数据
+    todos = [];
+    notes = [];
+    timelineEvents = { plan: [], execution: [] };
+  } finally {
+    isLoading = false;
   }
 }
 
 // 加载指定日期的数据
-function loadDayData() {
+async function loadDayData() {
+  await loadData();
   renderTodos();
   renderNotes();
   renderTimeline();
