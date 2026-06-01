@@ -1,8 +1,7 @@
 // Supabase 配置
 const SUPABASE_URL = 'https://strkcdsgvhryfcpqkgsp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_0N87xvXEF2xsmLX47Xl8EA_mcoQUiFH';
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 数据结构
 let todos = [];
