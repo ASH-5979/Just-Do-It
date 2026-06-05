@@ -239,6 +239,187 @@
       100% { transform: translateX(-100px) translateY(100px); opacity: 0; }
     }
 
+    /* 响应式设计 - 手机端优化 */
+    @media (max-width: 768px) {
+      /* 容器宽度调整 */
+      .container {
+        padding: 8px !important;
+        max-width: 100% !important;
+      }
+      
+      /* 待办卡片调整 */
+      .card {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+        border-radius: 16px !important;
+      }
+      
+      /* 输入框调整 */
+      .input-field {
+        padding: 10px 12px !important;
+        font-size: 14px !important;
+      }
+      
+      /* 按钮调整 */
+      .btn-primary, .btn-secondary {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+      }
+      
+      /* 时间轴整体布局 */
+      .timeline-container {
+        flex-direction: column !important;
+        gap: 0 !important;
+      }
+      
+      /* 时间列隐藏 */
+      .timeline-time {
+        display: none !important;
+      }
+      
+      /* 计划和执行部分改为全宽堆叠 */
+      .timeline-container > div.flex-1 {
+        width: 100% !important;
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+      
+      /* 分隔线隐藏 */
+      .timeline-container > .w-px {
+        display: none !important;
+      }
+      
+      /* 标题栏隐藏 */
+      .timeline-container .bg-white/80 {
+        display: none !important;
+      }
+      
+      /* 手机端时间轴样式 */
+      .mobile-timeline {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      
+      /* 手机端时间轴条目 */
+      .mobile-timeline-item {
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 8px !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+      }
+      
+      /* 时间点 */
+      .mobile-timeline-time {
+        width: 45px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #6B7280 !important;
+        flex-shrink: 0 !important;
+      }
+      
+      /* 事件内容 */
+      .mobile-timeline-content {
+        flex: 1 !important;
+        min-width: 0 !important;
+      }
+      
+      /* 计划事件卡片 */
+      .mobile-plan-event {
+        background: linear-gradient(135deg, #EF4444, #DC2626) !important;
+        color: white !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: normal !important;
+        word-break: break-all !important;
+        min-height: auto !important;
+      }
+      
+      /* 执行事件卡片 */
+      .mobile-execution-event {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1)) !important;
+        color: #166534 !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: normal !important;
+        word-break: break-all !important;
+        min-height: auto !important;
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
+      }
+      
+      /* 完成状态 */
+      .mobile-execution-event.completed {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.2)) !important;
+      }
+      
+      /* 原时间轴事件隐藏 */
+      .timeline-event {
+        display: none !important;
+      }
+      
+      /* 原时间轴小时格子隐藏 */
+      .timeline-container [data-hour] {
+        height: auto !important;
+        border: none !important;
+        padding: 0 !important;
+      }
+      
+      /* 标题字体调整 */
+      h1 {
+        font-size: 20px !important;
+      }
+      
+      h2 {
+        font-size: 16px !important;
+        margin-bottom: 12px !important;
+      }
+      
+      h3 {
+        font-size: 14px !important;
+      }
+      
+      /* 日历导航调整 */
+      header.card {
+        padding: 12px !important;
+      }
+      
+      /* 日期显示调整 */
+      header.card .text-2xl {
+        font-size: 18px !important;
+      }
+      
+      /* 弹窗宽度调整 */
+      #eventModal > div, #executionDetailModal > div {
+        margin: 10px !important;
+        padding: 16px !important;
+        max-width: calc(100% - 20px) !important;
+      }
+      
+      /* 事件弹窗按钮布局 */
+      #eventModal .flex, #executionDetailModal .flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      
+      /* 复选框调整 */
+      input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+      }
+      
+      /* 待办列表项调整 */
+      #todoList > div {
+        padding: 10px !important;
+      }
+    }
+    
     /* 月亮装饰 */
     .moon {
       position: fixed;
@@ -287,7 +468,7 @@
     <header class="card p-4 mb-6">
       <div class="flex items-center justify-between">
         <!-- 日期导航 -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
           <button onclick="changeDate(-1)" class="p-2 hover:bg-white/50 rounded-lg transition-colors">
             ←
           </button>
@@ -301,6 +482,13 @@
             →
           </button>
           <span id="weekdayBadge" class="px-3 py-1 text-sm rounded-full text-white font-medium"></span>
+          <button 
+            onclick="saveData()" 
+            class="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors"
+            id="saveButton"
+          >
+            💾 保存
+          </button>
         </div>
         
         <!-- 天气 -->
@@ -366,9 +554,9 @@
     <!-- 时间轴模块 -->
     <section class="card p-6 mb-6">
       <h2 class="text-xl font-semibold text-gray-800 mb-4">📅 时间轴</h2>
-      <div class="flex">
+      <div class="flex timeline-container">
         <!-- 时间列 -->
-        <div class="w-16 flex-shrink-0">
+        <div class="w-16 flex-shrink-0 timeline-time">
           <div class="space-y-0">
             <!-- 占位行，对齐标题栏 -->
             <div class="h-10"></div>
